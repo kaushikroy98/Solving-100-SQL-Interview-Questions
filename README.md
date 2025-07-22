@@ -1,6 +1,6 @@
 # Solving-SQL-Interview-Questions
 
-# Q1: Compare each films dvd's replacement cost to the average cost in the same MPAA rating
+## Q1: Compare each films dvd's replacement cost to the average cost in the same MPAA rating
 # Q2: Compare each films length to the longest film in it's category
 # Q3: Overall progress for binge watching all films
 # Q4. Create a row_number by length
