@@ -43,6 +43,53 @@ limit 1) a;
 /* Question 20. Customer who spent the most
 • Write a query to return the first and last name of the customer who spent the most on movie rentals in Feb 2020.*/
 
+select first_name,last_name
+from 
+  (
+  select 
+    c.customer_id,first_name, last_name, sum(amount) amount
+  from payment p
+  join customer c on p.customer_id = c.customer_id
+  where 
+    extract(year from payment_ts) = 2020 and 
+    extract(month from payment_ts) = 2
+  group by 1,2,3
+  order by 4 desc
+  limit 1) a;
+
+/* Question 21. Customer who rented the most
+• Write a query to return the first and last name of the customer who made the most rental transactions in May 2020.*/
+
+select 
+  first_name, last_name 
+from
+(
+  select 
+    first_name, last_name, count(rental_id) 
+  from rental r
+  inner join customer c on c.customer_id = r.customer_id
+  where extract(year from rental_ts) = 2020 and
+        extract(month from rental_ts) = 5
+  group by 1,2
+  order by 3 desc
+  limit 1) a;
+
+/* Question 22. Average cost per rental transaction
+• Write a query to return the average cost on movie rentals in May 2020 per transaction.*/
+
+
+select 
+  avg(amount) 
+from payment
+where extract(year from payment_ts) = 2020 and
+      extract(month from payment_ts) = 5;
+
+
+
+
+
+
+
 
 
 
