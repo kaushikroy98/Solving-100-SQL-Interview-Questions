@@ -171,6 +171,96 @@ from largest_cast;
 • Write a query to return the title of the film with the second largest cast.
 • If there are ties, e.g., two movies have the same number of actors, return either one of the movie.*/
 
+with largest_cast as 
+(
+  select title, 
+         count(actor_id) cast_count
+  from 
+    film_actor fc
+  inner join film f on f.film_id = fc.film_id
+  group by 1
+  order by 2 desc),
+  
+  rank_by_cast_count as (
+  
+    select 
+      title, cast_count,
+      rank() over(order by cast_count desc) as rank_num
+    from  
+        largest_cast
+)
+
+select 
+  title
+from 
+  rank_by_cast_count
+where rank_num = 2;
+
+
+/* Question 29. Second highest spend customer
+• Write a query to return the name of the customer who spent the second highest for movie rentals in May 2020.
+• If there are ties, return any one of them. */
+
+with total_spends as
+(
+  select  
+      first_name, last_name, sum(amount) total_spend
+  from payment p
+  inner join customer c on p.customer_id =c.customer_id
+  where extract(year from payment_ts) = 2020 and 
+        extract(month from payment_ts) = 5
+  group by 1,2
+  order by 3 desc
+ ),
+ rank_by_spend as(
+ select *,
+ row_number() over(order by total_spend desc) rank_num
+ from 
+    total_spends
+  )
+ 
+  select 
+    first_name, last_name
+  from 
+    rank_by_spend
+  where rank_num = 2;
+
+/* Question 30. Inactive customers in May
+• Write a query to return the total number of customers who didn't rent any movies in May2020.
+Hint
+• You can use NOT IN to exclude customers who have rented movies in May 2020.*/
+
+select 
+  count(*)
+from 
+  customer
+where customer_id not in (
+  select 
+    customer_id 
+  from  
+    rental
+  where extract(year from rental_ts) = 2020 and 
+  extract(month from rental_ts) = 5
+  )
+
+
+/* Question 31. Movies that have not been returned
+• Write a query to return the titles of the films that have not been returned by our customers.
+Hint
+• If a movie is not returned, the return_ts will be NULL in the rental table.*/
+
+
+select 
+  distinct title 
+from rental r
+join inventory i on r.inventory_id =i.inventory_id
+join film f on f.film_id = i.film_id
+where return_ts is null;
+
+/* Question 32. Unpopular movies
+• Write a query to return the number of films with no rentals in Feb 2020.
+• Count the entire movie catalog from the film table.*/
+
 
 
 
