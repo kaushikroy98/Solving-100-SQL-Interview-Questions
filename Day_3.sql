@@ -276,8 +276,37 @@ union
 select first_name, last_name from actor)
 
 select distinct first_name, last_name from last_name_A
-where last_name like 'A%'
+where last_name like 'A%';
 
+
+/* Question 47. Actors and customers whose first names end in 'D'
+• Write a query to return all actors and customers whose first names ends in 'D'.
+• Return their ids (for actor: use actor_id,customer: customer_id), first_name and last_name.
+• The order of your results doesn't matter.*/
+
+with last_name_A as
+(
+select customer_id as id,first_name, last_name from customer
+union 
+select actor_id as id,first_name, last_name from actor)
+
+select distinct id, first_name, last_name from last_name_A
+where first_name like '%D';
+
+/* Question 48. Movie and TV actors
+• Write a query to return actors who appeared in both tv and movies
+• The order of your results doesn't matter.*/
+
+select am.actor_id, am.first_name, am.last_name 
+from actor_movie am
+join actor_tv at on at.actor_id = am.actor_id;
+
+
+/* Question 49. Top 3 money making movie categories
+• Write a query to return the name of the 3 movie categories that generated the most rental revenue
+• And rental revenue from each of the category.
+• The order of your results doesn't matter.
+• If there are ties, return just one of them.*/
 
 
 
