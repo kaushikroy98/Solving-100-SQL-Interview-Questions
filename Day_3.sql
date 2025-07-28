@@ -120,8 +120,58 @@ limit 1)x
 • You have to use INNER JOIN in your query.*/
 
 
+with productive_actor as
+(
+select a.actor_id actor_id,first_name, last_name, count(film_id) from film_actor fa
+inner join actor a on a.actor_id = fa.actor_id
+group by 1,2,3
+order by 4 desc
+)
 
+select actor_id,first_name, last_name from productive_actor;
+
+/* Question 40. Top 5 most rented movie in June 2020
+• Write a query to return the film_id and title of the top 5 movies that were rented the most times in June 2020
+• Use the rental_ts column from the rental for the transaction time.
+• The order of your results doesn't matter.
+• If there are ties, return any 5 of them.*/
+
+
+with most_rented as
+(
+select f.film_id film_id, f.title title, count(rental_id) from rental r
+join inventory i on r.inventory_id = i.inventory_id
+join film f on f.film_id = i.film_id
+where extract(year from r.rental_ts)=2020 and extract(month from rental_ts)=6
+group by 1,2
+order by 3 desc
+limit 5
+)
+  
+select film_id, title from most_rented
+
+/* Question 41. Productive actors vs less-productive actors
+• Write a query to return the number of productive and less-productive actors.
+• The order of your results doesn't matter.*/
+
+
+with film_count as 
+(
+select actor_id, count(*) as cnt from film_actor
+group by 1
+order by 2 desc),
+
+productive as (
+select
+case
+when cnt >= 30 then 'productive'
+else 'less-productive'
+end as actor_category
+from film_count
+)
  
+ select actor_category, count(*) count from productive
+ group by 1;
 
 
 
