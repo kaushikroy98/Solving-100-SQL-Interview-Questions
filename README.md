@@ -1,9 +1,9 @@
 # Solving-SQL-Interview-Questions
 
 Single-Table Operations (Q1–Q35):
-1. Top store for movie sales
-2. Top 3 movie categories by sales
-3. Top 5 shortest movies
+- 1. Top store for movie sales
+- 2. Top 3 movie categories by sales
+- 3. Top 5 shortest movies
 4. Staff without a profile image
 5. Monthly revenue
 6. Daily revenue in June 2020
