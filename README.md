@@ -1,5 +1,7 @@
 # Solving-SQL-Interview-Questions
 
+## This document lists 100+ SQL interview questions to Crack any Interview with SQL.
+
 Single-Table Operations (Q1–Q35):
 - 1. Top store for movie sales
 - 2. Top 3 movie categories by sales
