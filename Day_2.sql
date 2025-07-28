@@ -257,9 +257,6 @@ join inventory i on r.inventory_id =i.inventory_id
 join film f on f.film_id = i.film_id
 where return_ts is null;
 
-/* Question 32. Unpopular movies
-• Write a query to return the number of films with no rentals in Feb 2020.
-• Count the entire movie catalog from the film table.*/
 
 
 
