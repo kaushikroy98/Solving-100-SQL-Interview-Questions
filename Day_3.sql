@@ -186,17 +186,13 @@ with stock as
 select f.film_id, count(i.inventory_id) cnt from film f
 left join inventory i on f.film_id = i.film_id
 group by 1
-),
-
-check1 as (
-select case when cnt=0 then 'not in stock'
-else 'in stock'
-end as in_stock
-from stock
 )
 
-select in_stock, count(*) from check1
-group by 1;
+select case when cnt=0 then 'not in stock'
+else 'in stock'
+end as in_stock, count(*) as count 
+from stock
+group by 1
 
 /* Question 43. Customers who rented vs. those who did not 
 • Write a query to return the number of customers who rented at least one movie vs. those who didn't in May 2020.
@@ -229,8 +225,58 @@ group by has_rented;
 • The order of your results doesn't matter. */
 
 
+with may_rentals as 
+(
+select
+    i.film_id,
+    count(*) as cnt
+  from rental   r
+  join inventory i on r.inventory_id = i.inventory_id
+  where r.rental_ts >= '2020-05-01'
+    and r.rental_ts <  '2020-06-01'
+  group by i.film_id)
 
 
+select 
+case
+when cnt>1 then 'in-demad'
+else 'not-in-demand'
+end demand_category,
+count(*) count
+from film f
+left join may_rentals m on m.film_id = f.film_id
+group by 1;
+
+
+/* Question 45. Movie inventory optimization
+• For movies that are not in demand (rentals = 0 in May 2020), we want to remove them from our inventory.
+• Write a query to return the number of unique inventory_id from those movies with 0 demand.
+• Hint: a movie can have multiple inventory_id.*/
+  
+
+
+select count(*)
+from inventory inv
+where inv.film_id not in 
+(
+select distinct i.film_id from inventory i
+join rental r on i.inventory_id = r.inventory_id
+where extract(year from rental_ts)=2020 and 
+extract(month from rental_ts) = 5);
+
+
+/* Question 46. Actors and customers whose last name starts with 'A'
+• Write a query to return unique names (first_name, last_name) of
+our customers and actors whose last name starts with letter 'A'.*/
+
+with last_name_A as
+(
+select first_name, last_name from customer
+union 
+select first_name, last_name from actor)
+
+select distinct first_name, last_name from last_name_A
+where last_name like 'A%'
 
 
 
