@@ -171,7 +171,63 @@ from film_count
 )
  
  select actor_category, count(*) count from productive
- group by 1;
+ group by 1
+ order by 3 desc;
+
+
+/* Question 42. Films that are in stock vs not in stock
+• Write a query to return the number of films that we have inventory vs no inventory.
+• A film can have multiple inventory ids
+• Each film dvd copy has a unique inventory ids*/
+
+
+with stock as
+(
+select f.film_id, count(i.inventory_id) cnt from film f
+left join inventory i on f.film_id = i.film_id
+group by 1
+),
+
+check1 as (
+select case when cnt=0 then 'not in stock'
+else 'in stock'
+end as in_stock
+from stock
+)
+
+select in_stock, count(*) from check1
+group by 1;
+
+/* Question 43. Customers who rented vs. those who did not 
+• Write a query to return the number of customers who rented at least one movie vs. those who didn't in May 2020.
+• The order of your results doesn't matter.
+• Use customer table as the base table for all customers (assuming all customers have signed up before May 2020)
+• Rented: if a customer rented at least one movie.*/
+
+
+with rented_in_may as (
+
+select distinct customer_id from rental 
+where extract(year from rental_ts)=2020 and extract(month from rental_ts) = 5
+)
+
+select 
+case
+when r.customer_id is not null then 'rented'
+else 'not rented'
+end as has_rented,
+count(*) as count
+from customer c
+left join rented_in_may r on r.customer_id = c.customer_id
+group by has_rented;
+
+
+/* Question 44. In-demand vs not-in-demand movies
+• Write a query to return the number of in demand and not in demand movies in May 2020.
+• Assumptions (great to clarify in your interview): all films are available for rent before May.
+• But if a film is not in stock, it is not in demand.
+• The order of your results doesn't matter. */
+
 
 
 
