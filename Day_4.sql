@@ -307,6 +307,142 @@ from film_revenue) x
 where row_num <=2
 
 
+/* Question 65. Movie revenue percentiles
+• Write a query to return percentile distribution for the following movies by their total rental revenues in the entire movie catalog.
+• film_id IN (1,10,11,20,21,30).
+• A film can only belong to one category.
+• The order of your results doesn't matter.
+• Return the following columns: film_id, revenue, percentile*/
+
+
+-- Solution 1
+
+with film_percentile as
+(
+select f.film_id film_id, sum(p.amount) revenue
+from payment p
+join rental r on p.rental_id = r.rental_id
+join inventory i on i.inventory_id = r.inventory_id
+join film f on f.film_id = i.film_id
+group by 1)
+
+select * from (
+select film_id, revenue,
+ntile(100) over(order by revenue) as percentile
+from film_percentile) x
+where film_id in (1,10,11,20,21,30);
+
+
+--Solution 2
+
+with film_revenue as
+(
+select f.film_id film_id, sum(p.amount) revenue
+from payment p
+join rental r on p.rental_id = r.rental_id
+join inventory i on i.inventory_id = r.inventory_id
+join film f on f.film_id = i.film_id
+group by 1),
+percentile as (
+select film_id, revenue,
+ntile(100) over(order by revenue) as percentile
+from film_revenue) 
+
+select * from percentile
+where film_id in (1,10,11,20,21,30);
+
+
+
+/* Question 66. Movie percentiles by revenue by category
+• Write a query to generate percentile distribution for the following movies by their total rental revenue in their category.
+• film_id <= 20.
+• Use NTILE(100) to create percentile.
+• The order of your results doesn't matter.
+• Return the following columns: category, film_id, revenue, percentile */
+
+with film_revenue as
+(
+select c.name category, f.film_id film_id, sum(p.amount) revenue
+from payment p
+join rental r on p.rental_id = r.rental_id
+join inventory i on i.inventory_id = r.inventory_id
+join film f on f.film_id = i.film_id
+join film_category fc on fc.film_id = f.film_id
+join category c on c.category_id = fc.category_id
+group by 2),
+
+percentile as (
+select category,film_id, revenue,
+ntile(100) over(partition by category order by revenue) as percentile
+from film_revenue) 
+
+select * from percentile
+where film_id <= 20;
+
+/* Question 67. Quartile by number of rentals
+• Write a query to return quartiles for the following movies by number of rentals among all movies.
+• film_id IN (1,10,11,20,21,30).
+• Use NTILE(4) to create quartile buckets.
+• The order of your results doesn't matter.
+• Return the following columns: film_id, number of rentals, quartile. */
+
+
+with rental_cnt as
+(
+select f.film_id film_id, count(r.rental_id) num_rentals,
+ntile(4) over(order by count(r.rental_id)) as quartile
+from rental r
+join inventory i on i.inventory_id = r.inventory_id
+join film f on f.film_id = i.film_id
+group by 1)
+
+select * from rental_cnt
+where film_id in (1,10,11,20,21,30);
+
+
+/* Question 68. Spend difference between first and second rentals
+• Write a query to return the difference of the spend amount between the following customers' first movie rental and their second rental.
+• customer_id in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10).
+• Use first spend - second spend to compute the difference.
+• Skip users who only rented once.
+Hint:
+• You can use ROW_NUMBER to identify the first and second transactions.
+• You can use LAG or LEAD to find previous or following transaction amount. */
+
+with ranks as (
+select customer_id, amount,
+row_number() over(partition by customer_id order by payment_ts) as rank_num
+from payment
+),
+first_2_spends as(
+select * from ranks
+where rank_num <=2
+),
+check1 as (
+select *,
+ lead(amount) over(partition by customer_id) as second_spend
+from first_2_spends)
+
+select customer_id, amount-second_spend as delta
+from check1
+where rank_num = 1
+limit 10
+
+/* Question 70. Cumulative spend
+• Write a query to return the cumulative daily spend for the following customers:
+• customer_id in (1, 2, 3).
+• Each day a user has a rental, return their total spent until that day.
+• If there is no rental on that day, you can skip that day.*/
+
+
+
+
+
+
+
+
+
+
 
 
 
