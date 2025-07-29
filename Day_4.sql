@@ -288,6 +288,23 @@ where rank_num in (1,2,3,4,5)
 • Return the following columns: category, film_id, revenue, row_num */
 
 
+with film_revenue as
+(
+select f.film_id film_id, c.name category, sum(p.amount) revenue
+from payment p
+join rental r on p.rental_id = r.rental_id
+join inventory i on i.inventory_id = r.inventory_id
+join film f on f.film_id = i.film_id
+join film_category fc on fc.film_id = f.film_id
+join category c on c.category_id = fc.category_id
+group by 1
+)
+
+select * from (
+select category, film_id, revenue,
+row_number() over(partition by category order by revenue desc) row_num
+from film_revenue) x
+where row_num <=2
 
 
 
