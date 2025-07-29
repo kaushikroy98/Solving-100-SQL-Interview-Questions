@@ -35,6 +35,201 @@ select fa.film_id from actor_tv act
 join film_actor fa on fa.actor_id = act.actor_id)
 order by film_id;
 
+/* Question 53. Movie groups by rental income
+• Write a query to return the number of films in 3 separate groups: high, medium, low.
+• The order of your results doesn't matter.
+• high: revenue >= $100.
+• medium: revenue >= $20, <$100 .
+• low: revenue <$20.*/
+
+with revenue_by_film as
+(
+select f.film_id, sum(p.amount) rev from film f
+left join inventory i on i.film_id = f.film_id
+left join rental r on r.inventory_id = i.inventory_id
+left join payment p on p.rental_id = r.rental_id
+group by 1
+ )
+ 
+ select 
+ case
+ when rev >=100 then 'high'
+ when rev >=20 then 'medium'
+ else 'low'
+ end film_group,
+ count(*) count
+ from revenue_by_film
+ group by 1;
+
+
+/* Question 54. Customer groups by movie rental spend
+• Write a query to return the number of customers in 3 separate groups: high, medium,low.
+• The order of your results doesn't matter. 
+• high: movie rental spend >= $150.
+• medium: movie rental spend >= $100, <$150.
+• low: movie rental spend <$100.
+
+Hint
+• If a customer spend 0 in movie rentals, he/she belongs to the low group.*/
+
+with rev_by_customer as
+(
+select c.customer_id, sum(p.amount) rev from customer c
+left join payment p on p.customer_id = c.customer_id
+group by 1
+)
+
+select
+case
+when rev >=150 then 'high'
+when rev >= 100 then 'medium'
+else 'low'
+end customer_group,
+count(*) count
+from rev_by_customer
+group by 1;
+
+
+/* Question 55. Busy days and slow days
+• Write a query to return the number of busy days and slow days in May 2020 based on the number of movie rentals.
+• The order of your results doesn't matter.
+• If there are ties, return just one of them. 
+• busy: rentals >= 100.
+• slow: rentals < 100.*/ 
+
+with rental_count as
+(
+select d.date, count(r.rental_id) cnt from dates d
+left join rental r on date(r.rental_ts) = d.date
+where d.date >= '2020-05-01' and d.date <= '2020-05-31'
+group by 1
+)
+
+select
+case
+when cnt >= 100 then 'busy'
+else 'slow'
+end date_category,
+count(*) count
+from rental_count
+group by 1;
+
+/* Question 56. Total number of actors
+• Write a query to return the total number of actors from actor_tv, actor_movie with FULL OUTER JOIN.
+• Use COALESCE to return the first non-null value from a list.
+• Actors who appear in both tv and movie share the same value of actor_id in both
+actor_tv and actor_movie tables. */
+
+SELECT
+  COUNT(COALESCE(am.actor_id, at.actor_id)) AS count
+FROM actor_movie AS am
+FULL OUTER JOIN actor_tv AS at
+  ON am.actor_id = at.actor_id;
+
+
+
+
+
+
+/* Question 57. Total number of actors 
+• Write a query to return the total number of actors using UNION.
+• Actor who appeared in both tv and movie has the same value of actor_id in both
+actor_tv and actor_movie tables.*/
+
+with actors as
+(
+select actor_id from actor_movie
+union
+select actor_id from actor_tv
+)
+
+select count(distinct actor_id) as 'count' from  actors;
+
+
+/* Question 58. Percentage of revenue per movie 
+• Write a query to return the percentage of revenue for each of the following films: film_id <= 10.
+• Formula: revenue (film_id x) * 100.0/ revenue of all movies.
+• The order of your results doesn't matter. */
+
+with revenue_by_film as
+(
+select f.film_id, sum(p.amount) revenue from film f
+left join inventory i on f.film_id = i.film_id
+left join rental r on r.inventory_id = i.inventory_id
+left join payment p on p.rental_id = r.rental_id
+group by 1
+order by 1
+)
+
+select film_id,
+round(revenue*100/(sum(revenue) over()),2) as revenue_perct 
+from revenue_by_film
+limit 10;
+
+
+/* Question 59. Percentage of revenue per movie by category
+• Write a query to return the percentage of revenue for each of the following films: film_id <= 10 by its category.
+• Formula: revenue (film_id x) * 100.0/ revenue of all movies in the same category.
+• The order of your results doesn't matter.
+• Return 3 columns: film_id, category name, and percentage. */
+
+with revenue_film as
+(
+select f.film_id,c.name as category_name, sum(p.amount) revenue from film f
+left join inventory i on f.film_id = i.film_id
+left join rental r on r.inventory_id = i.inventory_id
+left join payment p on p.rental_id = r.rental_id
+left join film_category fc on fc.film_id = f.film_id
+left join category c on c.category_id = fc.category_id
+group by 1,2
+order by 1,2
+)
+
+select film_id, category_name,
+revenue*100/sum(revenue) over(partition by category_name) as rev_prct
+from revenue_film
+order by film_id
+limit 10;
+
+
+/* Question 60. Movie rentals and average rentals in the same category
+• Write a query to return the number of rentals per movie, and the average number of rentals in its same category.
+• You only need to return results for film_id <= 10.
+• Return 4 columns: film_id, category name, number of rentals, and the average number
+of rentals from its category.*/
+
+with rentals_category as
+(
+select f.film_id film_id,c.name as category_name, count(r.rental_id) rentals
+from film f
+join inventory i on f.film_id = i.film_id
+join rental r on r.inventory_id = i.inventory_id
+join film_category fc on fc.film_id = f.film_id
+join category c on c.category_id = fc.category_id
+group by 1
+
+ )
+ 
+ select *, avg(rentals) over(partition by category_name) as avg_rentals_category
+ from rentals_category
+ where film_id<=10;
+
+
+/* Question 61. Customer spend vs average spend in the same store
+• Write a query to return a customer's life time value for the following: customer_id IN (1, 100, 101, 200, 201, 300, 301, 400, 401, 500).
+• Add a column to compute the average LTV of all customers from the same store.
+• Return 4 columns: customer_id, store_id, customer total spend, average customer
+• The order of your results doesn't matter.
+
+Hint
+
+• Assumptions: a customer can only be associated with one store.*/
+
+
+
+
+
+
 
 
 
