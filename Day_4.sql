@@ -225,6 +225,72 @@ Hint
 
 • Assumptions: a customer can only be associated with one store.*/
 
+with ltv_spend as
+(
+select c.customer_id customer_id, c.store_id store_id, 
+ sum(p.amount) ltd_spend from customer c
+left join payment p on c.customer_id = p.customer_id
+where c.customer_id in (1, 100, 101, 200, 201, 300, 301, 400, 401, 500)
+group by 1)
+
+select *,
+avg(ltd_spend) over(partition by store_id) as avg
+from ltv_spend;
+
+/* Question 62. Shortest film by category 
+• Write a query to return the shortest movie from each category.
+• The order of your results doesn't matter.
+• If there are ties, return just one of them.
+• Return the following columns: film_id, title, length, category, row_num*/
+
+with films as
+(
+select f.film_id film_id, f.title title, f.length length, c.name category from film f
+inner join film_category fc on f.film_id = fc.film_id
+inner join category c on c.category_id = fc.category_id
+),
+shortest_film as
+(
+select *,
+row_number() over(partition by category order by length) as row_num
+from films)
+
+select * from shortest_film
+where row_num = 1;
+
+
+/* Question 63. Top 5 customers by store
+• Write a query to return the top 5 customer ids and their rankings based on their spend for each store.
+• The order of your results doesn't matter.
+• If there are ties, return just one of them.*/
+
+with revenue as
+(
+select c.store_id store_id, c.customer_id customer_id, sum(p.amount) revenue from customer c
+join payment p on p.customer_id = c.customer_id
+group by 1,2),
+
+ranks as(
+select *,
+dense_rank() over(partition by store_id order by revenue desc) rank_num
+from revenue
+)
+
+select * from ranks
+where rank_num in (1,2,3,4,5)
+
+
+/* Question 64. Top 2 films by category
+• Write a query to return top 2 films based on their rental revenues in their category.
+• A film can only belong to one category.
+• The order of your results doesn't matter.
+• If there are ties, return just one of them.
+• Return the following columns: category, film_id, revenue, row_num */
+
+
+
+
+
 
 
 
