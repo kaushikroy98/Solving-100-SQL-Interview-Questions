@@ -434,6 +434,19 @@ limit 10
 • Each day a user has a rental, return their total spent until that day.
 • If there is no rental on that day, you can skip that day.*/
 
+with daily_spend as
+(
+select date(payment_ts) as 'date',customer_id, sum(amount) daily_spends 
+from payment
+where customer_id in (1,2,3)
+group by 1,2
+order by 1)
+
+select *, 
+sum(daily_spends) over(partition by customer_id order by date) as cumulative_spend
+from daily_spend;
+
+
 
 
 
