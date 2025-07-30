@@ -67,6 +67,143 @@ where happy_day is not null)
 select round(avg(date_diff)) 'avg' from date_difference;
 
 
+/* Question 74. The most productive actors by category
+• An actor’s productivity is defined as the number of movies he/she has played.
+• Write a query to return the category_id, actor_id and number of moviesby the most productive actor in that category.
+• For example: John Doe filmed the most action movies, your query will return John as the result for action movie category.
+• Do this for every movie category. */
+
+with cte1 as
+(
+select fc.category_id category_id,fa.actor_id actor_id, fa.film_id film_id
+from film_actor fa
+join film f on f.film_id = fa.film_id
+join film_category fc on fc.film_id = f.film_id
+),
+num_movies as
+(
+select category_id, actor_id,
+count(film_id) number_of_movies
+from cte1
+group by actor_id, category_id
+),
+rank_num as
+(
+select *,
+row_number() over(partition by category_id order by number_of_movies desc) num_rank
+from num_movies)
+
+select category_id, actor_id, number_of_movies
+from rank_num
+where num_rank =1
+
+/* Question 75. Top customer by movie category
+• For each movie category: return the customer id who spend the most in rentals.
+• If there are ties, return any customer id.*/
+
+with cust_revenue_by_cat as (
+select
+p.customer_id customer_id,
+fc.category_id category_id,
+SUM(p.amount) as revenue
+from payment p
+join rental r
+on r.rental_id = p.rental_id
+join inventory I
+on I.inventory_id = r.inventory_id
+join film f
+on f.film_id = I.film_id
+join film_category fc
+on fc.film_id = f.film_id
+group by p.customer_id, fc.category_id
+),
+rank_num as
+(
+select *,
+row_number() over(partition by category_id order by revenue desc) row_num
+from cust_revenue_by_cat)
+
+select  category_id,customer_id
+from rank_num
+where row_num=1;
+
+/* Question 76. Districts with the most and least customers
+• Return the district where the most and least number of customers are.
+• Append a column to indicate whether this district has the most customers or least customers with 'most' or 'least' category.
+• HINT: it is possible an address is not associated with any customer.*/
+
+
+with cus_count as
+(
+select a.district, 
+count(distinct c.customer_id) cus_cnt,
+row_number() over(order by count(distinct c.customer_id) asc) as cus_asc_id,
+row_number() over(order by count(distinct c.customer_id) desc) as cus_desc_id
+from address a
+left join customer c on a.address_id = c.address_id
+group by 1
+)
+
+select district, 'most' as city_cat
+from cus_count
+where cus_desc_id = 1
+union
+select district, 'lease' as city_cat
+from cus_count
+where cus_asc_id = 1
+
+
+/* Question 77. Movie revenue percentiles by category 
+ Write a query to return revenue percentiles (ordered ascendingly) of the following movies within their category:
+• film_id IN (1,2,3,4,5)*/
+
+with movie_rev_by_cat as (
+select
+f.film_id,
+max(fc.category_id) as category_id,
+sum(p.amount) as revenue
+from film f
+join inventory i on i.film_id = f.film_id
+join rental r on r.inventory_id = i.inventory_id
+join payment p on p.rental_id = r.rental_id
+join  film_category fc on fc.film_id = f.film_id
+group by f.film_id
+),
+percentile as
+(
+select film_id,
+ntile(100) over(partition by category_id order by revenue asc) prct_by_cat
+from movie_rev_by_cat
+)
+
+select * from percentile
+where film_id in (1,2,3,4,5)
+
+
+/* Question 78. Quartiles buckets by number of rentals
+• Write a query to return the quartile by the number of rentals for the following customers:
+• customer_id IN (1,2,3,4,5,6,7,8,9,10)*/
+
+
+with cust_rentals as (
+select c.customer_id customer_id,
+max(c.store_id) as store_id, 
+count(*) as num_rentals from
+rental r
+join customer c
+on c.customer_id = r.customer_id
+group by c.customer_id
+),
+quartile as
+(
+select customer_id, store_id, 
+ntile(4) over(partition by store_id order by num_rentals) as quartile
+from cust_rentals
+)
+
+select customer_id, store_id,quartile
+from quartile
+where customer_id in (1,2,3,4,5,6,7,8,9,10)
 
 
 
