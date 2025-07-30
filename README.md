@@ -70,7 +70,6 @@ Multi‑Table Operations (Q36–Q50, Q51–Q57, Q87):
 - 55. Busy vs. slow days (rental counts, May 2020)
 - 56. Total number of actors (FULL OUTER JOIN)
 - 57. Total number of actors (UNION)
-- 87. Top song in US & UK (yesterday)
 
 Window Functions (Q58–Q61, Q62–Q80, Q83, Q88, Q90):
 - 58. Percentage of revenue per movie (film_id ≤ 10)
@@ -99,5 +98,7 @@ Window Functions (Q58–Q61, Q62–Q80, Q83, Q88, Q90):
 - 83. Top search query in US & UK on New Year’s Day
 - 88. Top song report: top song_id per country
 - 90. Top artist report: top artist_id per country
+
+** Practice Questions on this link : https://sqlpad.io/playground/mysql/
 
 
