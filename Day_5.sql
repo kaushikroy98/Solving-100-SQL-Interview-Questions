@@ -1,4 +1,50 @@
 
+/* Question 69. Number of happy customers
+• Write a query to return the number of happy customers from May 24 (inclusive) to May 31 (inclusive).
+Definition
+• Happy customer: customers who made at least 1 rental in each day of any 2
+Hint
+• For customer 1, you can create the following temporary table:
+• customer 1, first rental date, second rental date
+• customer 1, second rental date, third rental date
+• customer 1, second last rental date, last rental date
+• customer 1, last rental date, NULL
+• As long as there is at least one row, where the delta of the last 2 columns are not null,
+and less or equal than 1 day, this customer must be a happy customer.*/
+
+
+WITH customer_rental_date AS (
+SELECT
+customer_id,
+DATE(rental_ts) AS rental_date
+FROM rental
+WHERE DATE(rental_ts) >= '2020-05-24'
+AND DATE(rental_ts) <= '2020-05-31'
+GROUP BY
+customer_id,
+DATE(rental_ts)
+),
+customer_rental_date_diff AS (
+SELECT
+customer_id,
+rental_date AS current_rental_date,
+LAG( rental_date, 1) OVER(PARTITION BY customer_id ORDER BY
+rental_date) AS prev_rental_date
+FROM customer_rental_date
+)
+SELECT COUNT(*) FROM (
+SELECT
+customer_id,
+MIN(current_rental_date - prev_rental_date)
+FROM customer_rental_date_diff
+GROUP BY customer_id
+HAVING MIN(current_rental_date - prev_rental_date) = 1
+) X
+;
+
+
+
+
 
 /* Question 71. Cumulative rentals
 • Write a query to return the cumulative daily rentals for the following customers:
@@ -242,6 +288,97 @@ where customer_id in (1,2,3,4,5,6,7,8,9,10)
 • DoD: (current_day/ prev_day -1) * 100.0
 • Multiply dod growth to 100.0 to get percentage of growth.
 • Use ROUND to convert dod growth to the nearest integer.*/
+
+with store_daily_rev as (
+select
+i.store_id,
+date(p.payment_ts) date,
+sum(amount) as daily_rev
+from
+payment p join rental r on r.rental_id = p.rental_id
+join inventory i on i.inventory_id = r.inventory_id
+where date(p.payment_ts) >= '2020-05-01'
+and date(p.payment_ts) <= '2020-05-31'
+group by i.store_id, date(p.payment_ts)
+)
+
+select *,
+ifnull(round(daily_rev*100/lag(daily_rev,1) over(partition by store_id order by date)),'') dod_growth
+from store_daily_rev;
+
+
+
+/* Question 83. Top search_query in US and UK on new year's day
+ Write a query to return the top searched term in the US and UK on new year's day
+(2021-01-01), separately
+• The order of your results doesn't matter.
+• Rank them based on search volume. */
+
+select country, query
+from (
+select
+query,
+country,
+count(distinct user_id),
+roq_number() over(partition by country order by count(distinct user_id) desc) as row_num
+from search
+where country in ('US', 'UK')
+and date = '2021-01-01'
+group by 1,2
+) X
+where row_num = 1;
+
+
+/* Question 88. Top song report
+• Write a query to return the top song id for every country
+• Return a unique row for each country
+• For simplicity, let's assume there is no tie.
+• The order of your results doesn't matter.*/
+
+with song_rankings as (
+select
+p.song_id,
+p.country,
+row_number() over(partition by country order by num_plays desc) as
+ranking
+from daily_plays P
+where p.date = current_date - 1
+)
+select
+song_id,
+country
+from song_rankings
+where ranking = 1;
+
+
+/* Question 90. Top artist report
+• Write a query to return the top artist id for every country
+• Return a unique row for each country
+• For simplicity, let's assume there is no tie.
+• The order of your results doesn't matter. */
+
+with artist_plays as (
+select
+S.artist_id,
+P.country,
+SUM(num_plays) num_plays
+from daily_plays P
+join song S
+on S.song_id = P.song_id
+where P.date = current_date - 1
+group by 1,2
+),
+artist_ranking as (
+select
+artist_id,
+country,
+row_number() over(partition by country order by num_plays desc) ranking
+from artist_plays
+)
+select country, artist_id
+from artist_ranking
+where ranking = 1;
+
 
 
 
