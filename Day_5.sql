@@ -206,6 +206,51 @@ from quartile
 where customer_id in (1,2,3,4,5,6,7,8,9,10)
 
 
+/* Question 79. Spend difference between the last and the second last rentals
+• Write a query to return the spend amount difference between the last and the second
+• customer_id IN (1,2,3,4,5,6,7,8,9,10).
+last movie rentals for the following customers:
+• Skip customers if they made less than 2 rentals.*/
+
+with cte1 as
+(
+select customer_id,payment_ts , amount,
+row_number() over(partition by customer_id order by payment_ts desc) num
+from payment
+),
+cte2 as 
+(
+select customer_id, payment_ts, amount,num
+from cte1
+),
+cte3 as 
+(  
+select *,
+amount- lead(amount) over(partition by customer_id order by payment_ts desc) delta
+from cte2
+where num <=2)
+  
+select * from(
+select customer_id, delta
+from cte3
+where delta is not null) x
+where customer_id in (1,2,3,4,5,6,7,8,9,10)
+
+
+/* Question 80. DoD revenue growth for each store 
+• Write a query to return DoD(day over day) growth for each store from May 24 (inclusive) to May 31 (inclusive).
+• DoD: (current_day/ prev_day -1) * 100.0
+• Multiply dod growth to 100.0 to get percentage of growth.
+• Use ROUND to convert dod growth to the nearest integer.*/
+
+
+
+
+
+
+
+
+
 
 
 
