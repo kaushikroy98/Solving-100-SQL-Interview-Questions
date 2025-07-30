@@ -99,6 +99,6 @@ Window Functions (Q58–Q61, Q62–Q80, Q83, Q88, Q90):
 - 88. Top song report: top song_id per country
 - 90. Top artist report: top artist_id per country
 
-** Practice Questions on this link : https://sqlpad.io/playground/mysql/
+** Practice Questions on this link :** https://sqlpad.io/playground/mysql/
 
 
