@@ -379,9 +379,76 @@ select country, artist_id
 from artist_ranking
 where ranking = 1;
 
+/* Question 84. Click through rate on new year's day
+• Write a query to compute the click through rate for the search results on new year's day (2021-01-01).
+• Click through rate: number of searches end up with at least one click.
+• Convert your result into a percentage (* 100.0).*/
 
 
+SELECT
+COUNT(DISTINCT CASE WHEN action = 'click' THEN search_id ELSE NULL END) *
+100.0/COUNT(DISTINCT search_id)
+FROM search_result
+WHERE date = '2021-01-01';
 
+/* Question 85. Top 5 queries based on click through rate on new year's day
+• Write a query to return the top 5 search terms with the highest click through rate on new year's day (2021-01-01)
+• The search term has to be searched by more than 2 (>2) distinct users.
+• Click through rate: number of searches end up with at least one click.*/
+
+WITH click_through_rate AS (
+SELECT
+S.query,COUNT(DISTINCT CASE WHEN action='click' THEN S.search_id ELSE NULL
+END) * 100/COUNT(DISTINCT S.search_id) ctr
+FROM
+search S
+INNER JOIN search_result R
+ON S.search_id = R.search_id
+WHERE S.date = '2021-01-01'
+GROUP BY S.query
+HAVING COUNT(DISTINCT S.user_id) > 2
+)
+SELECT query
+FROM click_through_rate
+ORDER BY ctr DESC
+LIMIT 5;
+
+
+/* Question 86. Top song in the US
+Write a query to return the name of the top song in the US yesterday.*/
+
+SELECT title FROM SONG
+WHERE song_id IN (
+SELECT d.song_id, s.name, d.plays
+FROM daily_plays d
+WHERE d.country = 'US'
+AND d.date = CURRENT_DATE - 1
+ORDER BY plays DESC
+LIMIT 1
+);
+
+
+/* Question 89. Top 5 artists in the US
+• Write a query to return the top 5 artists id for US yesterday.
+• Return a unique row for each country
+• For simplicity, let's assume there is no tie.
+• The order of your results doesn't matter.*/
+
+WITH artist_plays AS (
+SELECT
+S.artist_id,
+P.country,
+SUM(num_plays) num_plays
+FROM song_plays P
+INNER JOIN song S
+ON S.song_id = P.song_id
+WHERE P.date = CURRENT_DATE - 1
+GROUP BY 1,2
+)
+SELECT artist_id
+FROM artist_plays
+ORDER BY num_plays DESC
+LIMIT 5;
 
 
 
